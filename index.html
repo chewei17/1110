@@ -1,0 +1,1560 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+  <title>滿江紅水位觀察室</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #163f37;
+      --green: #236b50;
+      --line: #dce7dd;
+      --soft: #edf4e9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #f6f7f1;
+      color: var(--ink);
+      font: 16px/1.65 system-ui, -apple-system, sans-serif;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    header strong { font-size: 19px; }
+    header small { color: #536b60; }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(330px, 1fr);
+      max-width: 1440px;
+      margin: auto;
+    }
+
+    .viewer {
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      max-height: 920px;
+      background: #dbe8de;
+      overflow: hidden;
+    }
+
+    #stage {
+      position: absolute;
+      inset: 0 0 205px;
+    }
+
+    #stage iframe {
+      border: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .intro {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      text-align: center;
+      padding: 30px;
+      background: radial-gradient(
+        ellipse at 40% 30%,
+        #f1f8e6,
+        transparent 65%
+      );
+    }
+
+    .intro .symbol { font-size: 70px; }
+
+    .intro h1 {
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.3;
+      margin: 16px 0;
+    }
+
+    .intro p {
+      max-width: 340px;
+      margin: 0 auto;
+      color: #536b60;
+    }
+
+    .overlay {
+      position: absolute;
+      z-index: 5;
+      left: 16px;
+      right: 16px;
+      top: 16px;
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: #fffdf2ed;
+      font-size: 13px;
+      box-shadow: 0 3px 15px #173f3715;
+    }
+
+    .water-control {
+      position: absolute;
+      z-index: 5;
+      bottom: 18px;
+      left: 16px;
+      right: 16px;
+      background: #fffffff0;
+      border: 1px solid #ffffffaa;
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 8px 30px #163f3714;
+    }
+
+    .water-control label {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+    }
+
+    input[type=range] {
+      width: 100%;
+      min-height: 42px;
+      accent-color: #236b50;
+    }
+
+    .presets {
+      display: flex;
+      gap: 8px;
+    }
+
+    .presets button {
+      flex: 1;
+      padding: 7px;
+    }
+
+    button, a.button {
+      cursor: pointer;
+      font: inherit;
+      border: 1px solid #bed2c2;
+      border-radius: 10px;
+      background: white;
+      color: var(--ink);
+      padding: 10px 15px;
+      text-decoration: none;
+      text-align: center;
+      display: inline-block;
+    }
+
+    button:hover, a.button:hover {
+      background: #e8f0e5;
+    }
+
+    button.primary {
+      background: var(--green);
+      color: white;
+      border-color: var(--green);
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      outline: 3px solid #ca8a2a;
+      outline-offset: 3px;
+    }
+
+    .content {
+      padding: 24px 28px 48px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .15em;
+      color: #64816b;
+    }
+
+    h2 {
+      font-size: 22px;
+      line-height: 1.4;
+      margin: 6px 0 12px;
+    }
+
+    p { margin: 8px 0; }
+
+    .card {
+      padding: 21px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      margin-bottom: 16px;
+    }
+
+    .tip {
+      font-size: 14px;
+      color: #536b60;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .notice {
+      padding: 11px 14px;
+      background: #fff6dc;
+      border-radius: 10px;
+      color: #68521d;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
+    .status {
+      font-size: 14px;
+      min-height: 24px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    label.field {
+      display: block;
+      font-size: 14px;
+      margin: 10px 0 5px;
+    }
+
+    input:not([type=range]),
+    select,
+    textarea {
+      display: block;
+      width: 100%;
+      font: inherit;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #bdcfc2;
+      border-radius: 9px;
+      color: var(--ink);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 85px;
+    }
+
+    fieldset {
+      border: 0;
+      padding: 0;
+      margin: 12px 0;
+    }
+
+    legend { font-weight: 700; }
+
+    .choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .choice {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .choice:has(input:checked) {
+      background: #e7f2e4;
+      border-color: var(--green);
+    }
+
+    .choice input {
+      display: inline;
+      width: auto !important;
+      accent-color: var(--green);
+    }
+
+    .choice small {
+      display: block;
+      color: #64726a;
+      font-size: 12px;
+      margin-left: 20px;
+    }
+
+    .table-wrap { overflow: auto; }
+
+    table {
+      width: 100%;
+      font-size: 13px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 9px 6px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    td button {
+      font-size: 12px;
+      padding: 3px 7px;
+    }
+
+    .feedback {
+      white-space: pre-wrap;
+      padding: 14px;
+      background: var(--soft);
+      border-radius: 12px;
+      margin-top: 12px;
+    }
+
+    details { font-size: 14px; }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    a { color: #24674e; }
+
+    [hidden] { display: none !important; }
+
+    .footer {
+      font-size: 12px;
+      color: #6e7b71;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 800px) {
+      header { padding: 12px 16px; }
+      header small { display: none; }
+      main { display: block; }
+
+      .viewer {
+        position: relative;
+        height: 66dvh;
+        min-height: 500px;
+        max-height: 700px;
+      }
+
+      #stage { bottom: 235px; }
+      .content { padding: 18px 14px 32px; }
+      .card { padding: 18px; }
+      .water-control { bottom: 12px; }
+      .intro { padding: 35px 20px 0; }
+      .intro .symbol { font-size: 38px; }
+
+      .intro h1 {
+        font-size: 28px;
+        margin: 8px 0;
+      }
+
+      .intro p { font-size: 14px; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <strong>荷花水位觀察室</strong>
+  <small>自然探究實驗 · 觀察 → 比較 → 提出證據</small>
+</header>
+
+<main>
+  <section class="viewer" aria-label="AR 與三維模型觀察區">
+    <div id="stage">
+      <div class="intro">
+        <div class="symbol" aria-hidden="true">🪷</div>
+        <h1>水位改變了，<br>滿江紅呢？</h1>
+        <p>掃描圖卡，從不同水位觀察莖、葉柄和葉片的位置。</p>
+      </div>
+    </div>
+
+    <div class="overlay">
+      <span class="badge" id="tracking" role="status">
+        準備好圖卡，開始觀察
+      </span>
+    </div>
+
+    <div class="water-control">
+      <label for="water">
+        實驗水位
+        <output id="waterValue" for="water">50 / 100</output>
+      </label>
+
+      <input
+        id="water"
+        type="range"
+        min="0"
+        max="100"
+        value="50"
+        aria-label="調整相對水位"
+      >
+
+      <div class="presets">
+        <button type="button" data-water="15">降低水位</button>
+        <button type="button" data-water="50">中水位</button>
+        <button type="button" data-water="85">升高水位</button>
+      </div>
+
+      <p class="tip">
+        相對水位示意，非實際公分；植株固定，只有水面升降。
+      </p>
+    </div>
+  </section>
+
+  <div class="content">
+    <section class="card">
+      <div class="eyebrow">01 / 開始探索</div>
+      <h2>把滿江紅帶到你的桌面</h2>
+
+      <p>
+        使用手機或平板後鏡頭，對準完整的 Hiro 圖卡，
+        保持黑框清楚、光線充足。
+      </p>
+
+      <div class="actions">
+        <button class="primary" id="startAR" type="button">
+          開啟鏡頭 AR
+        </button>
+        <button id="startDemo" type="button">
+          不用鏡頭・3D 觀察
+        </button>
+      </div>
+
+      <div class="actions">
+        <a
+          class="button"
+          href="https://github.com/chewei17/1110"
+          target="_blank"
+          rel="noopener"
+        >
+          開啟／列印 Hiro 圖卡
+        </a>
+
+        <a
+          class="button"
+          id="externalLink"
+          target="_blank"
+          rel="noopener"
+          hidden
+        >
+          獨立網站開啟 AR
+        </a>
+      </div>
+
+      <p
+        class="status"
+        id="systemStatus"
+        role="status"
+        aria-live="polite"
+      ></p>
+
+      <p class="tip" id="modelStatus" role="status">
+        尚未載入模型。
+      </p>
+
+      <details>
+        <summary>操作與觀察提醒</summary>
+        <p>
+          1. 分別記錄低（0～30）、中（31～69）、高（70～100）水位。
+        </p>
+        <p>
+          2. 比較葉片與水面的相對位置，以及露出水面的莖／葉柄。
+        </p>
+        <p>
+          3. 本實驗呈現短時間水位變動，不模擬生長。
+          荷花葉柄與地下根莖不同，請勿把所有細長構造都稱為莖。
+        </p>
+        <p>
+          Hiro 是 AR 定位標記，不是一般 QR code。
+          自製圖卡須另外製作 AR.js 的 .patt 標記檔。
+        </p>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="eyebrow">02 / 觀察並記錄</div>
+      <h2>現在看到什麼？</h2>
+
+      <div class="fields">
+        <div>
+          <label class="field" for="leaf">
+            主要成熟葉片的位置
+          </label>
+          <select id="leaf">
+            <option value="">請觀察後選擇</option>
+            <option>高於水面</option>
+            <option>接觸水面</option>
+            <option>低於水面</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="field" for="stem">
+            相對中水位，莖／葉柄
+          </label>
+          <select id="stem">
+            <option value="">請觀察後選擇</option>
+            <option>作為比較基準</option>
+            <option>露出較多</option>
+            <option>露出較少</option>
+            <option>沒有露出</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="tip">
+        中水位請選「作為比較基準」；其他水位比較此基準。
+      </p>
+
+      <label class="field" for="note">
+        觀察描述（5～300 字）
+      </label>
+
+      <textarea
+        id="note"
+        maxlength="300"
+        placeholder="例如：水位降低後，葉片仍在水面上，葉柄露出的部分比中水位多。"
+      ></textarea>
+
+      <button id="addRecord" class="primary" type="button">
+        記錄目前水位
+      </button>
+
+      <p id="recordStatus" class="status" role="status"></p>
+
+      <div class="table-wrap">
+        <table>
+          <caption id="count">尚未加入觀察紀錄</caption>
+          <thead>
+            <tr>
+              <th>水位／來源</th>
+              <th>葉片／莖葉柄</th>
+              <th>描述</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="records"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="eyebrow">03 / 比較與判斷</div>
+      <h2>用觀察支持你的答案</h2>
+
+      <form id="answerForm">
+        <div class="fields">
+          <div>
+            <label class="field" for="className">班級</label>
+            <input
+              id="className"
+              required
+              maxlength="40"
+              autocomplete="off"
+              placeholder="例如：五年一班"
+            >
+          </div>
+
+          <div>
+            <label class="field" for="student">
+              座號或學生代碼
+            </label>
+            <input
+              id="student"
+              required
+              maxlength="40"
+              autocomplete="off"
+              placeholder="不必填全名"
+            >
+          </div>
+        </div>
+
+        <label class="field" for="group">組別（選填）</label>
+        <input id="group" maxlength="40" autocomplete="off">
+
+        <fieldset>
+          <legend>
+            你認為荷花屬於哪一種生長方式？
+          </legend>
+
+          <div class="choices">
+            <label class="choice">
+              <input
+                type="radio"
+                name="growthType"
+                value="挺水性"
+                required
+              >
+              挺水性
+              <small>根部固定，莖葉挺出水面</small>
+            </label>
+
+            <label class="choice">
+              <input
+                type="radio"
+                name="growthType"
+                value="沉水性"
+              >
+              沉水性
+              <small>主要植體生長於水中</small>
+            </label>
+
+            <label class="choice">
+              <input
+                type="radio"
+                name="growthType"
+                value="浮葉性"
+              >
+              浮葉性
+              <small>根部固定，葉片浮在水面</small>
+            </label>
+
+            <label class="choice">
+              <input
+                type="radio"
+                name="growthType"
+                value="漂浮性"
+              >
+              漂浮性
+              <small>植株漂浮，根不固定底泥</small>
+            </label>
+          </div>
+        </fieldset>
+
+        <label class="field" for="reason">
+          判斷原因（10～1000 字）
+        </label>
+
+        <textarea
+          id="reason"
+          required
+          minlength="10"
+          maxlength="1000"
+          placeholder="比較升高、降低水位的紀錄，說明根部是否固定、葉片在哪裡，以及這些證據如何支持你的判斷。"
+        ></textarea>
+
+        <div class="actions">
+          <button class="primary" id="submit" type="submit">
+            提交觀察紀錄
+          </button>
+
+          <button id="download" type="button">
+            下載 JSON 備份
+          </button>
+        </div>
+      </form>
+
+      <p class="status" id="submitStatus" role="status"></p>
+      <div id="feedback" class="feedback" hidden></div>
+
+      <p class="footer">
+        影像只供裝置即時辨識，不上傳鏡頭畫面。
+        本頁不在裝置永久儲存紀錄；
+        關閉或重新整理前請提交或下載備份。
+      </p>
+    </section>
+
+    <div class="notice">
+      模型與水面是教學示意，不是植物生理模擬。
+      請先確認模型確實為荷花且呈現正確構造，再用於正式課堂。
+    </div>
+  </div>
+</main>
+
+<!--
+  GAS 會注入設定。
+  獨立靜態網站會解析失敗，再改用 STANDALONE。
+-->
+<script type="application/json" id="gas-config"><?!= bootstrapJson ?></script>
+
+<script>
+'use strict';
+
+/**
+ * 獨立 HTTPS 部署時修改這裡。
+ * plant.glb 預設放在 index.html 同目錄。
+ */
+const STANDALONE = {
+  modelUrl: './plant.glb',
+  modelRotation: '0 0 0',
+  gasUrl: 'https://script.google.com/macros/s/REPLACE_DEPLOYMENT_ID/exec',
+  frontendUrl: ''
+};
+
+let config = STANDALONE;
+
+try {
+  config = {
+    ...STANDALONE,
+    ...JSON.parse(
+      document.getElementById('gas-config').textContent
+    )
+  };
+} catch (_) {
+  // 靜態網站採用 STANDALONE。
+}
+
+const $ = id => document.getElementById(id);
+
+const state = {
+  mode: null,
+  frame: null,
+  found: false,
+  ready: false,
+  source: null,
+  observations: [],
+  submission: null,
+  starting: false
+};
+
+const gasRPC = Boolean(
+  window.google &&
+  google.script &&
+  google.script.run
+);
+
+function modeName(o) {
+  return (
+    (o.mode === 'ar' ? 'AR' : '3D') +
+    '/' +
+    (o.source === 'glb' ? 'GLB' : '示意')
+  );
+}
+
+function status(text) {
+  $('systemStatus').textContent = text;
+}
+
+function band(water) {
+  return water <= 30 ? '低' : water >= 70 ? '高' : '中';
+}
+
+function invalidate() {
+  state.submission = null;
+  $('feedback').hidden = true;
+}
+
+if (
+  config.frontendUrl &&
+  /^https:\/\//.test(config.frontendUrl)
+) {
+  $('externalLink').href = config.frontendUrl;
+  $('externalLink').hidden = false;
+}
+
+if (gasRPC) {
+  status(
+    'GAS 若擋住相機，請用教師提供的獨立 HTTPS 網址開啟 AR；' +
+    '仍可使用 3D 觀察。'
+  );
+}
+
+function cameraError(error) {
+  status(
+    '相機無法開啟：' +
+    (
+      error && (error.name || error.message) ||
+      '權限或裝置錯誤'
+    ) +
+    '。請確認 HTTPS、瀏覽器相機權限；' +
+    'GAS iframe 若被政策限制，改用獨立 HTTPS 網頁。' +
+    '也可先選擇 3D 觀察。'
+  );
+}
+
+/**
+ * 使用隔離 iframe 載入渲染器：
+ * 1. AR.js 的相機尺寸等於觀察區尺寸。
+ * 2. 切換模式時移除 iframe，釋放相機與計時器。
+ * 3. 3D 模式不載入 AR.js。
+ */
+async function start(mode) {
+  if (state.starting) return;
+
+  state.starting = true;
+  $('startAR').disabled = true;
+  $('startDemo').disabled = true;
+
+  try {
+    if (mode === 'ar') {
+      if (
+        !window.isSecureContext ||
+        !navigator.mediaDevices?.getUserMedia
+      ) {
+        throw new Error('需要 HTTPS 與支援相機的瀏覽器');
+      }
+
+      const policy =
+        document.permissionsPolicy ||
+        document.featurePolicy;
+
+      if (policy && !policy.allowsFeature('camera')) {
+        throw new Error(
+          'iframe Permissions Policy 未允許相機'
+        );
+      }
+
+      // 先測試權限並釋放串流，之後交給 AR.js 使用。
+      const stream =
+        await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' }
+          },
+          audio: false
+        });
+
+      stream.getTracks().forEach(track => track.stop());
+    }
+
+    stopScene();
+
+    state.mode = mode;
+    state.found = false;
+    state.ready = false;
+    state.source = null;
+
+    const frame = document.createElement('iframe');
+
+    frame.title =
+      mode === 'ar'
+        ? 'AR 圖卡與滿江紅模型'
+        : '滿江紅三維模型';
+
+    frame.allow = 'camera';
+    frame.setAttribute(
+      'sandbox',
+      'allow-scripts allow-same-origin'
+    );
+
+    state.frame = frame;
+
+    const settings = JSON.stringify({
+      mode,
+      modelUrl: new URL(
+        config.modelUrl,
+        location.href
+      ).href,
+      rotation: config.modelRotation,
+      water: Number($('water').value)
+    }).replace(/</g, '\\u003c');
+
+    const scriptEnd = '<' + '/script>';
+
+    frame.srcdoc =
+      '<!doctype html><html><head>' +
+      '<meta name="viewport" ' +
+      'content="width=device-width,initial-scale=1">' +
+
+      '<style>' +
+      'html,body{' +
+      'margin:0!important;' +
+      'width:100%!important;' +
+      'height:100%!important;' +
+      'overflow:hidden;' +
+      'background:transparent}' +
+      'a-scene{position:absolute!important;inset:0}' +
+      'canvas{position:absolute!important;inset:0}' +
+      '</style>' +
+
+      '<script src="https://aframe.io/releases/1.6.0/aframe.min.js">' +
+      scriptEnd +
+
+      (
+        mode === 'ar'
+          ? '<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.7/aframe/build/aframe-ar.js">' +
+            scriptEnd
+          : ''
+      ) +
+
+      '</head><body><script>(' +
+      renderFrame.toString() +
+      ')(' + settings + ');' +
+      scriptEnd +
+      '</body></html>';
+
+    $('stage').replaceChildren(frame);
+
+    $('tracking').textContent =
+      mode === 'ar'
+        ? '尋找 Hiro 圖卡…'
+        : '3D 觀察模式 · 未使用相機';
+
+    $('modelStatus').textContent =
+      '正在載入渲染器與 plant.glb…';
+
+    status(
+      mode === 'ar'
+        ? '請對準 Hiro 圖卡，辨識成功後再記錄。'
+        : '請比較三種水位；紀錄會標示為 3D 觀察。'
+    );
+  } catch (error) {
+    if (mode === 'ar') {
+      cameraError(error);
+    } else {
+      status(String(error.message || error));
+    }
+  } finally {
+    state.starting = false;
+    $('startAR').disabled = false;
+    $('startDemo').disabled = false;
+  }
+}
+
+function stopScene() {
+  if (state.frame) {
+    state.frame.remove();
+    state.frame = null;
+  }
+
+  state.ready = false;
+  state.found = false;
+}
+
+window.addEventListener('pagehide', stopScene);
+
+/**
+ * 只接受目前渲染 iframe 的訊息。
+ */
+window.addEventListener('message', event => {
+  if (
+    !state.frame ||
+    event.source !== state.frame.contentWindow ||
+    event.data?.channel !== 'lotus-renderer'
+  ) {
+    return;
+  }
+
+  const message = event.data;
+
+  if (message.type === 'error') {
+    state.ready = false;
+    status(message.text);
+  }
+
+  if (message.type === 'cameraError') {
+    state.found = false;
+    cameraError({ message: message.text });
+  }
+
+  if (message.type === 'tracking') {
+    state.found = message.found;
+
+    $('tracking').textContent =
+      message.found
+        ? '圖卡已辨識 · 可以記錄'
+        : '圖卡離開鏡頭 · 請重新對準';
+  }
+
+  if (message.type === 'ready') {
+    state.ready = true;
+    state.source = message.source;
+
+    $('modelStatus').textContent =
+      message.source === 'glb'
+        ? 'plant.glb 已載入。模型底部對齊底泥，' +
+          '高度正規化；水面刻度為相對值。'
+        : 'plant.glb 無法載入，現在是構造示意模型；' +
+          '紀錄會標記為「示意」。' +
+          '請教師確認 GLB 網址、方向與 CORS。';
+  }
+});
+
+function updateWater() {
+  const value = Number($('water').value);
+
+  $('waterValue').textContent =
+    `${value} / 100（${band(value)}水位）`;
+
+  state.frame?.contentWindow.postMessage({
+    channel: 'lotus-control',
+    water: value
+  }, '*');
+}
+
+/**
+ * 此函式在自建 iframe 中執行。
+ * 只處理模型顯示，不讀取學生資料。
+ */
+function renderFrame(settings) {
+  const send = (type, extra = {}) => {
+    parent.postMessage({
+      channel: 'lotus-renderer',
+      type,
+      ...extra
+    }, '*');
+  };
+
+  if (!window.AFRAME) {
+    send('error', {
+      text: 'A-Frame 載入失敗，請確認 aframe.io 連線後重試。'
+    });
+    return;
+  }
+
+  if (
+    settings.mode === 'ar' &&
+    !AFRAME.systems.arjs
+  ) {
+    send('error', {
+      text: 'AR.js 載入失敗，請確認 CDN 連線後重試。'
+    });
+    return;
+  }
+
+  function el(tag, attrs = {}) {
+    const node = document.createElement(tag);
+
+    for (const [key, value] of Object.entries(attrs)) {
+      node.setAttribute(key, value);
+    }
+
+    return node;
+  }
+
+  const scene = el('a-scene', {
+    embedded: '',
+    'vr-mode-ui': 'enabled: false',
+    'xr-mode-ui': 'enabled: false',
+    'device-orientation-permission-ui': 'enabled: false',
+    renderer:
+      'alpha: true; antialias: true; colorManagement: true',
+    'loading-screen': 'enabled: false'
+  });
+
+  if (settings.mode === 'ar') {
+    scene.setAttribute(
+      'arjs',
+      'sourceType: webcam; ' +
+      'debugUIEnabled: false; ' +
+      'trackingMethod: best; ' +
+      'cameraParametersUrl: ' +
+      'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.7/data/data/camera_para.dat;'
+    );
+  } else {
+    scene.setAttribute(
+      'background',
+      'color: #dbe8de'
+    );
+  }
+
+  const root =
+    settings.mode === 'ar'
+      ? el('a-marker', {
+          type: 'pattern',
+          url:
+            'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.7/data/data/patt.hiro',
+          emitevents: 'true'
+        })
+      : el('a-entity');
+
+  root.addEventListener('markerFound', () => {
+    send('tracking', { found: true });
+  });
+
+  root.addEventListener('markerLost', () => {
+    send('tracking', { found: false });
+  });
+
+  // 底泥：植株根部固定於 y=0。
+  root.appendChild(el('a-cylinder', {
+    radius: '.86',
+    height: '.05',
+    position: '0 -.035 0',
+    color: '#84765e'
+  }));
+
+  // 半透明水面。
+  const water = el('a-cylinder', {
+    radius: '.85',
+    height: '.012',
+    material:
+      'color: #51b9ce; ' +
+      'opacity: 0.42; ' +
+      'transparent: true; ' +
+      'depthWrite: false; ' +
+      'side: double'
+  });
+
+  root.appendChild(water);
+
+  // 水面 y=.12～.90；只改水面，不拉長或移動植株。
+  function update(value) {
+    water.setAttribute(
+      'position',
+      `0 ${.12 + value * .0078} 0`
+    );
+  }
+
+  update(settings.water);
+
+  window.addEventListener('message', event => {
+    if (
+      event.source === parent &&
+      event.data?.channel === 'lotus-control' &&
+      Number.isInteger(event.data.water) &&
+      event.data.water >= 0 &&
+      event.data.water <= 100
+    ) {
+      update(event.data.water);
+    }
+  });
+
+  root.appendChild(el('a-light', {
+    type: 'ambient',
+    intensity: '1.6'
+  }));
+
+  root.appendChild(el('a-light', {
+    type: 'directional',
+    intensity: '2.2',
+    position: '1 3 2'
+  }));
+
+  const container = el('a-entity');
+
+  const model = el('a-entity', {
+    rotation: settings.rotation
+  });
+
+  container.appendChild(model);
+  root.appendChild(container);
+
+  let settled = false;
+
+  /**
+   * GLB 載入失敗時的簡化構造。
+   * 明確標記為示意，避免誤認成指定 GLB。
+   */
+  function fallback() {
+    if (settled) return;
+
+    settled = true;
+    clearTimeout(timer);
+    container.remove();
+
+    [
+      [-.29, .84, -.05],
+      [.17, 1.06, .10],
+      [.35, .7, -.18]
+    ].forEach(([x, y, z]) => {
+      // 葉柄。
+      root.appendChild(el('a-cylinder', {
+        radius: '.018',
+        height: String(y),
+        position: `${x} ${y / 2} ${z}`,
+        color: '#4b8043'
+      }));
+
+      // 葉片。
+      root.appendChild(el('a-cylinder', {
+        radius: '.25',
+        height: '.014',
+        position: `${x} ${y} ${z}`,
+        color: '#3e8d4c'
+      }));
+    });
+
+    // 地下根莖示意。
+    root.appendChild(el('a-cylinder', {
+      radius: '.035',
+      height: '.56',
+      position: '0 .02 0',
+      rotation: '0 0 90',
+      color: '#b9a16d'
+    }));
+
+    send('ready', { source: 'schematic' });
+  }
+
+  const timer = setTimeout(fallback, 30000);
+
+  model.addEventListener('model-error', fallback);
+
+  model.addEventListener('model-loaded', () => {
+    if (settled) return;
+
+    const mesh = model.getObject3D('mesh');
+    if (!mesh) return fallback();
+
+    model.object3D.updateMatrixWorld(true);
+
+    const box = new AFRAME.THREE.Box3()
+      .setFromObject(model.object3D);
+
+    const size = box.getSize(
+      new AFRAME.THREE.Vector3()
+    );
+
+    if (
+      !Number.isFinite(size.y) ||
+      size.y <= 0 ||
+      Math.max(size.x, size.z) / size.y > 10
+    ) {
+      return fallback();
+    }
+
+    // 模型高度正規化為 1.2，底部對齊底泥。
+    const scale = 1.2 / size.y;
+
+    container.object3D.scale.setScalar(scale);
+
+    container.object3D.position.set(
+      -(box.min.x + box.max.x) * scale / 2,
+      -box.min.y * scale,
+      -(box.min.z + box.max.z) * scale / 2
+    );
+
+    settled = true;
+    clearTimeout(timer);
+
+    send('ready', { source: 'glb' });
+  });
+
+  model.setAttribute(
+    'gltf-model',
+    'url(' + settings.modelUrl + ')'
+  );
+
+  scene.appendChild(root);
+
+  const camera = el('a-entity', {
+    camera: '',
+    'look-controls': 'enabled: false',
+    'wasd-controls': 'enabled: false'
+  });
+
+  if (settings.mode === 'demo') {
+    camera.setAttribute('camera', 'fov: 45');
+    camera.setAttribute('position', '0 1.6 2.6');
+    camera.setAttribute('rotation', '-21 0 0');
+  }
+
+  scene.appendChild(camera);
+  document.body.appendChild(scene);
+
+  window.addEventListener('camera-error', event => {
+    send('cameraError', {
+      text: String(
+        event.detail?.error?.message ||
+        event.detail?.message ||
+        '請確認相機權限與其他程式占用情形'
+      )
+    });
+  });
+
+  window.addEventListener('pagehide', () => {
+    document.querySelectorAll('video').forEach(video => {
+      video.srcObject?.getTracks().forEach(track => {
+        track.stop();
+      });
+    });
+  });
+}
+
+/**
+ * 水位操作。
+ */
+$('water').addEventListener('input', () => {
+  updateWater();
+  $('leaf').value = '';
+  $('stem').value = '';
+});
+
+document.querySelectorAll('[data-water]').forEach(button => {
+  button.addEventListener('click', () => {
+    $('water').value = button.dataset.water;
+    updateWater();
+
+    $('leaf').value = '';
+    $('stem').value = '';
+  });
+});
+
+$('startAR').addEventListener('click', () => start('ar'));
+$('startDemo').addEventListener('click', () => start('demo'));
+
+/**
+ * 加入目前水位的觀察紀錄。
+ */
+$('addRecord').addEventListener('click', () => {
+  function fail(message) {
+    $('recordStatus').textContent = message;
+  }
+
+  if (!state.ready) {
+    return fail(
+      '請先開啟 AR 或 3D 模式，等候模型載入。'
+    );
+  }
+
+  if (state.mode === 'ar' && !state.found) {
+    return fail(
+      '請先讓鏡頭辨識圖卡，再記錄。'
+    );
+  }
+
+  if (state.observations.length >= 12) {
+    return fail(
+      '最多記錄 12 筆，可先刪除多餘紀錄。'
+    );
+  }
+
+  if (
+    !$('leaf').value ||
+    !$('stem').value ||
+    $('note').value.trim().length < 5
+  ) {
+    return fail(
+      '請選擇葉片、莖／葉柄的位置，' +
+      '並填入至少 5 字描述。'
+    );
+  }
+
+  state.observations.push({
+    water: Number($('water').value),
+    mode: state.mode,
+    source: state.source,
+    leaf: $('leaf').value,
+    stem: $('stem').value,
+    note: $('note').value.trim()
+  });
+
+  invalidate();
+  renderRecords();
+
+  $('note').value = '';
+  $('leaf').value = '';
+  $('stem').value = '';
+
+  fail('已加入觀察紀錄，尚未送出。');
+});
+
+function renderRecords() {
+  $('records').replaceChildren();
+
+  state.observations.forEach((observation, index) => {
+    const row = document.createElement('tr');
+
+    const texts = [
+      `${observation.water}（${band(observation.water)}）\n` +
+        modeName(observation),
+
+      `${observation.leaf}\n${observation.stem}`,
+
+      observation.note
+    ];
+
+    texts.forEach(text => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      row.appendChild(td);
+    });
+
+    const td = document.createElement('td');
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.textContent = '刪除';
+
+    button.setAttribute(
+      'aria-label',
+      `刪除第 ${index + 1} 筆紀錄`
+    );
+
+    button.onclick = () => {
+      state.observations.splice(index, 1);
+      invalidate();
+      renderRecords();
+    };
+
+    td.appendChild(button);
+    row.appendChild(td);
+    $('records').appendChild(row);
+  });
+
+  const bands = new Set(
+    state.observations.map(o => band(o.water))
+  );
+
+  $('count').textContent =
+    `${state.observations.length} 筆觀察 · ` +
+    `已完成 ${bands.size}/3 種水位`;
+}
+
+/**
+ * 相同內容重送沿用提交編號，避免重複寫入。
+ */
+function payload() {
+  if (!state.submission) {
+    state.submission = crypto.randomUUID
+      ? crypto.randomUUID()
+      : 'lotus-' +
+        Date.now() +
+        '-' +
+        Math.random().toString(16).slice(2);
+  }
+
+  return {
+    id: state.submission,
+    className: $('className').value.trim(),
+    student: $('student').value.trim(),
+    group: $('group').value.trim(),
+
+    growthType:
+      document.querySelector(
+        '[name=growthType]:checked'
+      )?.value || '',
+
+    reason: $('reason').value.trim(),
+    observations: state.observations
+  };
+}
+
+$('answerForm').addEventListener('input', invalidate);
+
+/**
+ * 提交觀察。
+ */
+$('answerForm').addEventListener('submit', event => {
+  event.preventDefault();
+
+  const data = payload();
+
+  const bands = new Set(
+    data.observations.map(o => band(o.water))
+  );
+
+  if (bands.size !== 3) {
+    $('submitStatus').textContent =
+      '請先記錄低、中、高水位各至少一筆，再提交。';
+    return;
+  }
+
+  if (data.reason.length < 10) {
+    $('submitStatus').textContent =
+      '判斷原因至少需要 10 字。';
+    return;
+  }
+
+  if (gasRPC) {
+    $('submit').disabled = true;
+    $('submitStatus').textContent =
+      '正在儲存，請稍候…';
+
+    google.script.run
+      .withSuccessHandler(result => {
+        $('submit').disabled = false;
+
+        $('submitStatus').textContent =
+          result.message +
+          ' 提交編號：' +
+          result.id;
+
+        $('feedback').textContent = result.feedback;
+        $('feedback').hidden = false;
+      })
+      .withFailureHandler(error => {
+        $('submit').disabled = false;
+
+        $('submitStatus').textContent =
+          '儲存失敗：' +
+          error.message +
+          '；請下載備份後再試。';
+      })
+      .submitObservation(data);
+
+  } else {
+    const validURL =
+      /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/
+        .test(config.gasUrl);
+
+    if (
+      !validURL ||
+      config.gasUrl.includes('REPLACE_')
+    ) {
+      $('submitStatus').textContent =
+        '教師尚未設定 GAS /exec 網址。' +
+        '請先下載 JSON 備份。';
+      return;
+    }
+
+    // 一般表單導航不受 fetch CORS 讀取限制。
+    // 成功與否以 GAS 結果分頁為準。
+    const form = document.createElement('form');
+
+    form.method = 'POST';
+    form.action = config.gasUrl;
+    form.target = '_blank';
+
+    const input = document.createElement('input');
+
+    input.type = 'hidden';
+    input.name = 'payload';
+    input.value = JSON.stringify(data);
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    form.submit();
+    form.remove();
+
+    $('submitStatus').textContent =
+      '已開啟 GAS 結果分頁；' +
+      '請確認該分頁顯示「紀錄已儲存」。' +
+      '本頁無法讀取跨網域結果，尚未確認儲存。';
+  }
+});
+
+/**
+ * 下載學生作答備份。
+ */
+$('download').addEventListener('click', () => {
+  const blob = new Blob(
+    [JSON.stringify(payload(), null, 2)],
+    { type: 'application/json;charset=utf-8' }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = 'lotus-observation.json';
+  a.click();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+updateWater();
+</script>
+</body>
+</html>
